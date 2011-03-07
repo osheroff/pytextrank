@@ -38,9 +38,6 @@ class RegexpReplacer(object):
     s = text
     for (pattern, repl) in self.patterns:
       (s, count) = re.subn(pattern, repl, s)
-      if count > 0:
-        print count
-        print str(pattern)
     return s
 
 
@@ -57,6 +54,28 @@ class Node:
 
   def __repr__(self):
     return "Node '%s'<%s>,%.4f,(%s)" % (self.word, self.pos, self.score, ",".join(self.edges.keys()))
+
+class Phrase:
+  def __init__(self, node):
+    self.nodes = [node]
+  
+  def score(self):
+    score = 0
+    for x in self.nodes:
+      score += x.score
+    return score
+
+  def append(self, node):
+    return self.nodes.append(node)
+
+  def __str__(self):
+    return " ".join([x.word for x in self.nodes])
+
+  def __hash__(self):
+    return str(self).__hash__()
+
+  def __cmp__(self, other):
+    return cmp(str(self), str(other))
 
 class TextRank:
   def __init__(self, tagger):
@@ -101,8 +120,7 @@ class TextRank:
           j += 1
 
 
-
-  def rank(self, dictionary)
+  def rank(self, dictionary):
     for node in dictionary.values():
       node.score = 1.0 / len(dictionary.keys())
     
@@ -117,6 +135,32 @@ class TextRank:
         node.score = node.new_score
     return dictionary
 
+  def find_ngram_keywords_sentence(self, final_keywords, sentence):
+    phrase = None
+    output = set()
+    for word, pos in sentence:
+      if word in final_keywords:
+        if phrase is None:
+          phrase = Phrase(final_keywords[word])
+        else:
+          phrase.append(final_keywords[word])
+      else:
+        if phrase is not None:
+          output.add(phrase)
+          phrase = None
+    
+    if phrase is not None: 
+      output.add(phrase)
+    return output
+
+  def find_ngram_keywords(self, final_keywords, sentences):
+    output = set()
+    for sentence in sentences:
+      output |= self.find_ngram_keywords_sentence(final_keywords, sentence)
+   
+    #print "\n".join([str(x) for x in output])
+    return output 
+  
   def extract_keywords(self, text):
     uncontract = RegexpReplacer().replace(text.lower())
     sentences = nltk.sent_tokenize(uncontract)
@@ -129,7 +173,21 @@ class TextRank:
 
     dictionary = self.rank(dictionary)
 
-    print("\n".join([str(x) for x in sorted(dictionary.values(),key=lambda x: x.score, reverse=True)]))
+    ranked_nodes =  sorted(dictionary.values(),key=lambda x: x.score, reverse=True)
+    final_dict = {}
+    count = 0
+    max_count = len(ranked_nodes) / 3
+    for node in ranked_nodes:
+      if count > max_count:
+        break
+      final_dict[node.word] = node
+      count += 1
+
+    phrases = self.find_ngram_keywords(final_dict, tagged_sentences) 
+    phrases = sorted(phrases, key=lambda x: x.score(), reverse=True)
+    print "\n".join(["%s (%.4f)" % (str(x), x.score()) for x in phrases])
+      
+    #print("\n".join([str(x) for x in sorted(dictionary.values(),key=lambda x: x.score, reverse=True)]))
     
 regexp_tagger = nltk.RegexpTagger(
      [(r'^-?[0-9]+(.[0-9]+)?$', 'CD'),   # cardinal numbers
@@ -140,10 +198,9 @@ regexp_tagger = nltk.RegexpTagger(
       (r'.*s$', 'NNS'),                  # plural nouns
       (r'.*ing$', 'VBG'),                # gerunds
       (r'.*ed$', 'VBD'),                 # past tense verbs
-      (r'^i$', 'AT'),
-      (r'^AND$', 'AT'),
-      (r'^IN$', 'AT'),
+      (r'^i$', 'PN'),
       (r'.*', None)])
+
 tagger = nltk.UnigramTagger(nltk.corpus.brown.tagged_sents(), backoff=regexp_tagger)
 ranker = TextRank(tagger)
 
