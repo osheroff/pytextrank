@@ -1,0 +1,92 @@
+I've started to invite some customers to try the site and give me feedback.
+
+The first comment that came back:
+"When I clicked the link from the email, the site came up with a request for setting the password. After entering the password, it took me to the site but I apparently was not logged in. After receiving your email, I took a look again to verify that I wasn't blind. There was no navigation bar but there was a small 'login' text in the upper right corner. "
+
+Is there a way to make the "login" text larger.  It really is microscopic.
+
+Thanks.
+
+Alan
+Hi Alan,
+
+You can use a CSS widget to change the size of the text in the top right. Here is a example
+
+#top-right, #top-right a {
+font-size: 20px;
+}
+
+Just create a CSS widget in Account=>widgets add widget and paste the code in there. 
+
+Cheers
+Skip
+Once I have the widget, how do I edit the Login page?
+
+
+
+Thanks.
+
+
+Alan
+
+
+
+*From:* Skip Moore [mailto:notifications-support@zendesk.com]
+*Sent:* Saturday, March 05, 2011 11:40 AM
+*To:* Anewman
+*Subject:* [Zendesk Support] Re: Login text is too small
+Hi Alan, 
+
+Could you send me a screenshot of the page you are talking about highlighting the text you want bigger?
+
+Thanks
+Skip
+The Login actually appears on the far right side (not sure why my screen
+capture puts it on the extreme left). <http://www.evernote.com/> SwiftTest
+Support
+
+Clipped from: http://support.swifttest.com/home
+
+*login <http://support.swifttest.com/login>*
+
+[image: cid:3bc17665548c96478c004fd28328ee82.jpeg]<http://www.swifttest.com/>
+
+
+[image: cid:ed8d94afd06c5e4279e817c3fe386b66.png]
+
+*SwiftTest Support* <http://support.swifttest.com/home>
+Support
+
+You can submit an issue, problem or question via this web site or send us an
+email at *support@swifttest.zendesk.com*<http://support.swifttest.com/mailto:support@swifttest.zendesk.com>
+.
+
+
+
+*RSS <http://support.swifttest.com/home.rss> *
+SwiftTest SupportNews <http://support.swifttest.com/entries/468275-news>
+
+Alan Newman Mar-01 *•* *Announcements*
+
+As SwiftTest continues to grow, we realized that we needed a more scalable
+system for tracking customer questions and issues. We look forward to
+continue to answer your questions and resolve your problems quickly.
+
+Thanks for your continued support.
+
+SwiftTest Support Team
+
+
+
+Help Desk Software <http://www.zendesk.com> by Zendesk
+
+
+
+
+
+
+
+*From:* Skip Moore [mailto:notifications-support@zendesk.com]
+*Sent:* Monday, March 07, 2011 2:16 PM
+*To:* Anewman
+*Subject:* [Zendesk Support] Re: #82141 Login text is too small

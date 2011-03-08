@@ -1,0 +1,31 @@
+For the past couple of days I have been having issues with getting CSV files sent to my e-mail. When I click on the CSV within whichever view it is that I need the excel file for, It says that It will generate it and send it to my e-mail just like it always does, but I never get the e-mail. I tried with one of my co-workers accounts and they never got the e-mail either.
+Hi,
+
+Could you give us an example of a view which you've tried to export but never got the email for? This will help us with debugging your issue.
+
+Best Regards
+
+Lawrence | Customer Advocate | support@zendesk.com
+Got this directly from Kiran as I guess he was emailed as well.  He's looking for CSVs of the following 2 reports:
+
+“Tier 2 report queue”. But I also tried “Teir2 Backlog – All”
+I created a view that shows me any open, pending, or solved tickets in the tier 2 group. It contains about 11000+ tickets. I also tried for a view that has all of the open tickets in the tier 2 queue which has about 800 tickets and didn’t get the e-mail for that one either.
+
+
+Hi,
+
+Apologies for the inconvenience we are still not sure why this is happening so I have passed your request on to our Development team who are looking into this; someone will be getting back with you as soon as possible.  We appreciate your patience.
+
+
+Love Your Zendesk
+
+Lawrence | Customer Advocate | support@zendesk.com
+No need to worry, it seems to be working again. Thanks for the help!
+
+
+We've been chasing the CSV issue all morning, I'd like to check into this account and see if it was suffering from the same issue other accounts were, but I'm not 100% sure which account is in question here. Is it https://support.zendesk.com/monitor/children/show/18276 ?
+Hi Scott,
+
+Yes I believe that is the correct account.
+
+Lawrence
