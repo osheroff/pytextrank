@@ -1,0 +1,53 @@
+My OpenID login has stopped working for Zendesk. I am successfully logged into MyOpenID.com, and can log into Basecamp with this, however access to Zendesk says, "OpenID verification failed"
+
+I've tested on various browsers and multiple computers. Currently my username and password is working to allow me access. Any suggestions for fixing this?
+Hi Ben, 
+
+I have passed your request on to our technical team who are looking into this for you; someone will be getting back with you as soon as possible.  We appreciate your patience. 
+
+
+Love Your Zendesk
+
+Joy | Customer Advocate | support@zendesk.com
+Hi Ben,
+
+Could you grab a screenshot of the error you are seeing along with the url address bar?
+
+Thanks
+Skip
+https://forgetcomputers.zendesk.com/access/unauthenticated?return_to=https%3A%2F%2Fforgetcomputers.zendesk.com%2Flogin
+
+Ben Greiner
+Forget Computers
+312 602.5345 x1
+
+MEMBER: Apple Consultants Network
+
+Supplemental Mac and iOS Services for IT Pros
+http://forgetcomputers.com/corporate
+
+NEW: iOS Support
+http://forgetcomputers.com/ios
+
+Follow us on Twitter:
+http://twitter.com/forgetcomputers
+I tried to login in with my myopenid.com OpenID and I keep getting errors. When I tried with verisign's OpenID it worked. Is there a know issue with myopenid's OpenID?
+I can only reproduce this in production.
+Ben Rohrs just confirmed for me that he can't log into Zendesk with OpenID either.
+Ben,
+
+Scott from Zendesk Engineering. Looks like authentication using myopenid is consistently failing for us from our production servers, but works consistently from all of our testing and QA servers. The information we're getting back from myopenid doesn't include any extra information about why the failures are happening. This leaves us with very few avenues to pursue on our own.
+
+I'm going to be contacting myopenid directly to see if there's anything showing up in the logs on their end.
+
+The best case scenario is that they'll have something helpful to say and that they'll be quick about responding. In the worst case they can't or won't be able to help and we'll be stuck. I'll keep you posted on what they have to say.
+
+Scott
+Thanks for the update Scott. myopenid has been working since you introduced it (over a year or more ago?) but only recently stopped.
+
+Ben Greiner
+Forget Computers
+312 602.5345 x1
+Glad to help! I've sent a support request to Janrain (owners of the myopenid service). Interestingly enough, they use Zendesk for their helpdesk :)
+
+Scott
