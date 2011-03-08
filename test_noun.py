@@ -4,6 +4,7 @@
 import nltk
 import nltk.corpus
 import re
+import glob
 from nltk.corpus import brown 
 from nltk.corpus import names
 
@@ -86,7 +87,7 @@ class TextRank:
       return False
     if word in name_words:
       return False
-    if pos == 'NN' or pos == 'JJ':
+    if pos == 'NN' or pos == 'JJ' or pos == 'NNS':
       return True
     if pos is None:
       return re.match(r"^[A-Za-z\._]+$", word)
@@ -204,5 +205,9 @@ regexp_tagger = nltk.RegexpTagger(
 tagger = nltk.UnigramTagger(nltk.corpus.brown.tagged_sents(), backoff=regexp_tagger)
 ranker = TextRank(tagger)
 
-foo = open("sample").read()
-ranker.extract_keywords(foo)    
+for fname in glob.glob("comments/*"):
+  f = open(fname)
+  comments = f.read()
+  print("Running TextRank on comment %s" % (fname))
+  ranker.extract_keywords(comments)    
+  f.close
