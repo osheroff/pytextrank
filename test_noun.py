@@ -6,7 +6,7 @@ import nltk.corpus
 import re
 import glob
 from nltk.corpus import brown 
-from nltk.corpus import names
+import nltk.corpus
 
 
 WINDOW = 3
@@ -22,14 +22,17 @@ replacement_patterns = [
   ( r'(\w+)\'s', '\g<1> is' ),
   ( r'(\w+)\'re', '\g<1> are' ),
   ( r'(\w+)\'d', '\g<1> would' ),
-  ( r'http://[\S+]\s', ' ')
+  ( r'https?://\S+\s', ' '),
+  ( r'\'(\w+)\'', '\g<1>'),
+  ( r'"(\w+)"', '\g<1>')
 ]
 
-name_words = {}
+word_blacklist = {}
 
-for name in names.words():
-  name_words[name.lower()] = True
+for name in nltk.corpus.names.words():
+  word_blacklist[name.lower()] = True
 
+word_blacklist['support'] = True
 
 class RegexpReplacer(object):
   def __init__( self, patterns=replacement_patterns):
@@ -49,6 +52,7 @@ class Node:
     self.edges = {}
     self.score = 0.0
     self.new_score = 0.0
+    self.count = 1
 
   def add_edge(self, node):
     self.edges[node.word] = node
@@ -85,7 +89,7 @@ class TextRank:
   def word_is_interesting(self, word, pos):
     if len(word) < 3:
       return False
-    if word in name_words:
+    if word in word_blacklist:
       return False
     if pos == 'NN' or pos == 'JJ' or pos == 'NNS':
       return True
@@ -100,9 +104,13 @@ class TextRank:
     for sentence in sentences:
       for word, pos in sentence:
         if self.word_is_interesting(word, pos):
+          print "Interesting word: %s--%s @ %d" % (word, pos, i)
           if not word.lower() in node_dict:
-            print "Interesting word: %s--%s @ %d" % (word, pos, i)
             node_dict[word.lower()] = Node(word.lower(), pos)
+          else:
+            node_dict[word.lower()].count += 1
+        else:
+          print "Uninteresting word: %s--%s @ %d" % (word, pos, i)
         i += 1
     return node_dict
 
@@ -161,10 +169,14 @@ class TextRank:
    
     #print "\n".join([str(x) for x in output])
     return output 
-  
+
+  def preprocess(self, text):
+    out = text.lower()
+    out = RegexpReplacer().replace(out)
+    return out
+ 
   def extract_keywords(self, text):
-    uncontract = RegexpReplacer().replace(text.lower())
-    sentences = nltk.sent_tokenize(uncontract)
+    sentences = nltk.sent_tokenize(text)
     split_sentences = [nltk.word_tokenize(x) for x in sentences]
     tagged_sentences = [self.tagger.tag(x) for x in split_sentences]
     dictionary = self.build_node_dict(tagged_sentences)
@@ -174,15 +186,21 @@ class TextRank:
 
     dictionary = self.rank(dictionary)
 
-    ranked_nodes =  sorted(dictionary.values(),key=lambda x: x.score, reverse=True)
+    freq_ranked_nodes = sorted(dictionary.values(), 
+                              key=lambda x: x.count, reverse = True)
+    ranked_nodes =  sorted(freq_ranked_nodes,
+                              key=lambda x: x.score, reverse=True)
     final_dict = {}
     count = 0
-    max_count = len(ranked_nodes) / 3
-    for node in ranked_nodes:
-      if count > max_count:
-        break
-      final_dict[node.word] = node
-      count += 1
+    if True:
+      max_count = len(ranked_nodes) / 3
+      for node in ranked_nodes:
+        if count > max_count:
+          break
+        final_dict[node.word] = node
+        count += 1
+    else:
+      final_dict = dict([[node.word, node] for node in ranked_nodes])
 
     phrases = self.find_ngram_keywords(final_dict, tagged_sentences) 
     phrases = sorted(phrases, key=lambda x: x.score(), reverse=True)
@@ -196,11 +214,20 @@ regexp_tagger = nltk.RegexpTagger(
       (r'.*able$', 'JJ'),                # adjectives
       (r'.*ness$', 'NN'),                # nouns formed from adjectives
       (r'.*ly$', 'RB'),                  # adverbs
-      (r'.*s$', 'NNS'),                  # plural nouns
+#      (r'.*s$', 'NNS'),                  # plural nouns
       (r'.*ing$', 'VBG'),                # gerunds
       (r'.*ed$', 'VBD'),                 # past tense verbs
       (r'^i$', 'PN'),
       (r'.*', None)])
+
+ranker = TextRank(None)
+for fname in glob.glob("comments/*"):
+  f = open(fname)
+  comments = f.read()
+  print comments
+  print "==========================\n"
+  print ranker.preprocess(comments)    
+
 
 tagger = nltk.UnigramTagger(nltk.corpus.brown.tagged_sents(), backoff=regexp_tagger)
 ranker = TextRank(tagger)
@@ -209,5 +236,6 @@ for fname in glob.glob("comments/*"):
   f = open(fname)
   comments = f.read()
   print("Running TextRank on comment %s" % (fname))
-  ranker.extract_keywords(comments)    
+  processed = ranker.preprocess(comments)
+  ranker.extract_keywords(processed)    
   f.close
