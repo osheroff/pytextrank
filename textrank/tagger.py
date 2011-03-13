@@ -7,22 +7,6 @@ import os.path
 import re
 import yaml
 
-word_patterns = [
-    (r'^-?[0-9]+(.[0-9]+)?$', 'CD'),
-    (r'.*ould$', 'MD'),
-    (r'.*ing$', 'VBG'),
-    (r'.*ness$', 'NN'),
-    (r'.*ment$', 'NN'),
-    (r'.*ful$', 'JJ'),
-    (r'.*ious$', 'JJ'),
-    (r'.*ble$', 'JJ'),
-    (r'.*ic$', 'JJ'),
-    (r'.*ive$', 'JJ'),
-    (r'.*est$', 'JJ'),
-    (r'^a$', 'PREP'),
-    (r'^i$', 'PN'),
-    (r'^[A-Z][a-z]$', 'PN', lambda index, *j: index != 0),
-]
 
 class LambdaRegexpTagger(nltk.tag.RegexpTagger, yaml.YAMLObject):
   def choose_tag(self, tokens, index, history):
@@ -41,11 +25,32 @@ class LambdaRegexpTagger(nltk.tag.RegexpTagger, yaml.YAMLObject):
       if test_re and re.match(regexp, tokens[index]): # ignore history
         return tag
     return None
+  
+def begins_sentence(cls, index, *args):
+  return index == 0 
+
+word_patterns = [
+    (r'^-?[0-9]+(.[0-9]+)?$', 'CD'),
+    (r'.*ould$', 'MD'),
+    (r'.*ing$', 'VBG'),
+    (r'.*ness$', 'NN'),
+    (r'.*ment$', 'NN'),
+    (r'.*ful$', 'JJ'),
+    (r'.*ious$', 'JJ'),
+    (r'.*ble$', 'JJ'),
+    (r'.*ic$', 'JJ'),
+    (r'.*ive$', 'JJ'),
+    (r'.*est$', 'JJ'),
+    (r'^a$', 'PREP'),
+    (r'^i$', 'PN'),
+    (r'^[A-Z][a-z]$', 'PN', begins_sentence),
+]
 
 class TextRankTagger:
   def __init__(self, train_sents):
     print "building taggers......."
-     
+    
+       
     self.tagger = nltk.tag.UnigramTagger(train_sents, backoff=LambdaRegexpTagger(word_patterns))
     #self.raubt_tagger = self.backoff_tagger(train_sents, 
     #      [nltk.tag.AffixTagger, nltk.tag.UnigramTagger, nltk.tag.BigramTagger, nltk.tag.TrigramTagger],
@@ -59,11 +64,12 @@ class TextRankTagger:
     #self.tagger.backoff = nltk.tag.RegexpTagger(word_patterns)  
     print "... done"
 
+  def load_pickled(cls, pickle_filename):
+    f = open(pickle_filename, "r+")
+    instance = unpickle(f)
+    f.close()
+    return instance
+
   def tag(self, words):
     return self.tagger.tag(words)
   
-  def dump(self, filename):
-    f = open(filename, "w+")
-    f.write(pickle(self))
-    f.close 
- 

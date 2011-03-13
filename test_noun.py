@@ -6,6 +6,7 @@ import nltk.corpus
 import re
 import glob
 from textrank.tagger import TextRankTagger
+import pickle
 
 WINDOW = 3
 
@@ -87,13 +88,19 @@ class TextRank:
   def __init__(self, tagger):
     self.tagger = tagger
 
-  def word_is_interesting(self, word, pos):
+  def word_is_interesting(self, word, pos, before_pos, after_pos):
     if len(word) < 3:
       return False
-    if word in word_blacklist:
+    if word.lower() in word_blacklist:
       return False
-    if pos == 'NN' or pos == 'JJ' or pos == 'NNS' or pos == 'VBG' or pos == 'VBN':
+    if pos == 'NN' or pos == 'JJ' or pos == 'NNS':
       return True
+    if pos == 'VBG': # the pricing, but not he is pricing it
+      print "Considering VBG %s: (before_pos == %s)" % (word, before_pos)
+      return before_pos == 'AT' or before_pos == 'PP$'
+    if pos == 'VBD' or pos == 'VBN': # the pricing, but not he is pricing it
+      print "Considering %s %s: (after_pos == %s)" % (pos, word, after_pos)
+      return after_pos == 'NN' or after_pos == 'NNS'
     if pos is None:
       return re.match(r"^[A-Za-z\._]+$", word)
     else:
@@ -104,8 +111,11 @@ class TextRank:
     uninteresting = set()
     i = 0
     for sentence in sentences:
-      for word, pos in sentence:
-        if self.word_is_interesting(word, pos):
+      for index, (word, pos) in enumerate(sentence):
+        before_pos = sentence[index - 1][1] if index > 0 else None
+        after_pos = sentence[index + 1][1] if index < len(sentence) - 1 else None
+
+        if self.word_is_interesting(word, pos, before_pos, after_pos):
           node = Node(word.lower(), pos)
           #print "Interesting word: %s--%s @ %d" % (word, pos, i)
           if not word.lower() in node_dict:
@@ -226,9 +236,11 @@ class TextRank:
     print "\n".join(["%s (%.4f)" % (str(x), x.score()) for x in phrases])
       
     #print("\n".join([str(x) for x in sorted(dictionary.values(),key=lambda x: x.score, reverse=True)]))
-    
 
-tagger = TextRankTagger(nltk.corpus.brown.tagged_sents())
+pickle_file = open("./textrank_tagger.pickle", "r+")
+tagger = pickle.load(pickle_file)
+pickle_file.close() 
+#tagger = TextRankTagger(nltk.corpus.brown.tagged_sents())
 ranker = TextRank(tagger)
 
 for fname in glob.glob("comments/*"):
