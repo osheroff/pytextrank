@@ -38,7 +38,7 @@ class LambdaRegexpTagger(nltk.tag.RegexpTagger, yaml.YAMLObject):
         if not func(index, tokens[index], history):
           test_re = False
 
-    if test_re and re.match(regexp, tokens[index]): # ignore history
+      if test_re and re.match(regexp, tokens[index]): # ignore history
         return tag
     return None
 
