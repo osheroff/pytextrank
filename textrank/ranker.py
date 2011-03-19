@@ -73,7 +73,8 @@ class TextRank:
         self.stopwords[name.lower()] = True
 
   def debug(self, string):
-    sys.stderr.write(string)
+    if self.do_debug:
+      sys.stderr.write(string + "\n")
 
   def word_is_interesting(self, word, pos, before_pos, after_pos):
     if len(word) < 3:
