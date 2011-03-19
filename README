@@ -1,0 +1,4 @@
+This is an implementation of the TextRank algorithm (http://www.aclweb.org/anthology/W/W04/W04-3252.pdf), 
+implemented using python's nltk package.  
+
+It's in its infancy.  Don't expect too much yet.
