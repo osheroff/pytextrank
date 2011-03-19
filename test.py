@@ -1,26 +1,21 @@
-import sys
+#!/usr/bin/env python
 
-sys.path.append('./jwzthreading-0.91')
+import pickle
+import glob
+import textrank.ranker
+import textrank.tagger
 
-import jwzthreading as jwz
-import mailbox
+pickle_file = open("./textrank_tagger.pickle", "r+")
+tagger = pickle.load(pickle_file)
+pickle_file.close() 
+#tagger = TextRankTagger(nltk.corpus.brown.tagged_sents())
+ranker = textrank.ranker.TextRank(tagger)
 
-to_thread = []
-counter=0
+for fname in glob.glob("comments/*"):
+  f = open(fname)
+  comments = f.read()
+  processed = ranker.preprocess(comments)
+  for phrase in ranker.extract_keywords(processed):
+    print "%s (%.4f)" % (str(phrase), phrase.score())
 
-for message in mailbox.Maildir('~/src/botpy/data/Archives.ilike', factory=None):
-    shell = jwz.make_message_from_email(message)
-    shell.message = message.get_filename()
-    to_thread.append(shell)
-    counter += 1
-
-threaded = jwz.thread(to_thread)
-# Output
-L = threaded.items()
-L.sort()
-for subj, container in L:
-    jwz.print_container(container)
-
-     
-    
 
