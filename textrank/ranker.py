@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # coding=UTF-8
 
+import itertools
+import re
+import sys
+import glob
+import numpy
 import nltk
 import nltk.corpus
-import re
-import glob
+import nltk.stem.porter
 import textrank.tagger
 import textrank.prefilter
-import pickle
-import sys
+
+porter_stemmer = nltk.stem.porter.PorterStemmer()
 
 DEFAULT_WORD_WINDOW = 3
 
@@ -36,7 +40,18 @@ class WordNode(Node):
 
 class SentenceNode(Node):
   def __hash__(self):
-    return hash(self.value.join(" "))
+    return hash(" ".join(self.value))
+
+  def __init__(self, sentence):
+    super(SentenceNode, self).__init__(sentence)
+    self.stemmed_words = set([porter_stemmer.stem(word.lower()) for word in sentence])
+
+  def similarity(self, other_sentence):
+    count = 0.0
+    for word in self.stemmed_words:
+      if word in other_sentence.stemmed_words:
+        count += 1
+    return count / (numpy.log(len(self.stemmed_words) + 1) + numpy.log(len(other_sentence.stemmed_words) + 1))
 
 class Phrase:
   def __init__(self, node):
@@ -141,20 +156,20 @@ class TextRank:
           j += 1
 
 
-  def rank(self, dictionary):
-    for node in dictionary.values():
-      node.score = 1.0 / len(dictionary.keys())
+  def rank(self, node_list):
+    for node in node_list:
+      node.score = 1.0 / len(node_list)
     
     for x in range(100):  
-      for node in dictionary.values():
+      for node in node_list:
         node.new_score = 0
         for other, weight in node.edges.values():
           node.new_score += (other.score * weight) / len(other.edges)
         node.new_score *= 0.85
         node.new_score += 1 - 0.85
-      for node in dictionary.values():
+      for node in node_list:
         node.score = node.new_score
-    return dictionary
+    return node_list
 
   def find_ngram_keywords_sentence(self, final_keywords, sentence):
     phrase = None
@@ -207,26 +222,47 @@ class TextRank:
     for sentence in tagged_sentences:
       self.build_edges(sentence, dictionary)
 
-    dictionary = self.rank(dictionary)
+    ranked_nodes = self.rank(dictionary.values())
 
-    freq_ranked_nodes = sorted(dictionary.values(), 
+    freq_sorted_nodes = sorted(ranked_nodes, 
                               key=lambda x: x.count, reverse = True)
-    ranked_nodes =  sorted(freq_ranked_nodes,
+    rank_sorted_nodes =  sorted(freq_sorted_nodes,
                               key=lambda x: x.score, reverse=True)
     final_dict = {}
     count = 0
     if False:
-      max_count = len(ranked_nodes) / 3
-      for node in ranked_nodes:
+      max_count = len(rank_sorted_nodes) / 3
+      for node in rank_sorted_nodes:
         if count > max_count:
           break
         final_dict[node.value] = node
         count += 1
     else:
-      final_dict = dict([[node.value, node] for node in ranked_nodes])
+      final_dict = dict([[node.value, node] for node in rank_sorted_nodes])
 
     phrases = self.find_ngram_keywords(final_dict, tagged_sentences) 
     phrases = sorted(phrases, key=lambda x: x.score(), reverse=True)
     return phrases
       
+  def extract_sentences(self, text, sentence_count):
+    lines = nltk.tokenize.LineTokenizer().tokenize(text)
 
+    outlist = [nltk.sent_tokenize(line) for line in lines]
+    sentences = [sentence for inlist in outlist for sentence in inlist]
+
+    split_sentences = self.preprocess_split([nltk.word_tokenize(x) for x in sentences])
+    nodes = [SentenceNode(sentence) for sentence in split_sentences]
+    for i in range(len(nodes)):
+      this_node = nodes[i]
+      for j in range(i + 1, len(nodes)):
+        that_node = nodes[j]
+        similarity = this_node.similarity(that_node)
+        this_node.add_edge(that_node, similarity)
+        that_node.add_edge(this_node, similarity)
+
+    ranked = self.rank(nodes)
+    rank_sorted_nodes =  sorted(ranked,
+                              key=lambda x: x.score, reverse=True)
+    for sentence in rank_sorted_nodes: 
+      print sentence.score
+      print " ".join(sentence.value)

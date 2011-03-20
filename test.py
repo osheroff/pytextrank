@@ -15,7 +15,8 @@ for fname in glob.glob("comments/*"):
   f = open(fname)
   comments = f.read()
   processed = ranker.preprocess(comments)
-  for phrase in ranker.extract_keywords(processed):
-    print "%s (%.4f)" % (str(phrase), phrase.score())
+  #for phrase in ranker.extract_keywords(processed):
+  #  print "%s (%.4f)" % (str(phrase), phrase.score())
+  ranker.extract_sentences(processed, 10)
 
 
