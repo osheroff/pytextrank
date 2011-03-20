@@ -12,23 +12,31 @@ import sys
 
 DEFAULT_WORD_WINDOW = 3
 
-class Node:
-  def __init__(self, word, pos):
-    self.word = word
-    self.pos = pos
+class Node(object):
+  def __init__(self, value):
     self.edges = {}
     self.score = 0.0
     self.new_score = 0.0
     self.count = 1
+    self.value = value
 
-  def add_edge(self, node):
-    self.edges[node.word] = node
+  def add_edge(self, node, weight=1.0):
+    self.edges[node] = (node, weight)
 
-  def __repr__(self):
-    return "'%s'<%s>" % (self.word, self.pos)
+class WordNode(Node):
+  def __init__(self, word, pos):
+    super(WordNode, self).__init__(word)
+    self.pos = pos
+
+  def __str__(self):
+    return "'%s'<%s>" % (self.value, self.pos)
   
   def __hash__(self):
-    return hash(self.word + str(self.pos))
+    return hash(self.value + str(self.pos))
+
+class SentenceNode(Node):
+  def __hash__(self):
+    return hash(self.value.join(" "))
 
 class Phrase:
   def __init__(self, node):
@@ -44,7 +52,7 @@ class Phrase:
     return self.nodes.append(node)
 
   def __str__(self):
-    return " ".join([x.word for x in self.nodes])
+    return " ".join([x.value for x in self.nodes])
 
   def __hash__(self):
     return str(self).__hash__()
@@ -106,7 +114,7 @@ class TextRank:
         after_pos = sentence[index + 1][1] if index < len(sentence) - 1 else None
 
         if self.word_is_interesting(word, pos, before_pos, after_pos):
-          node = Node(word.lower(), pos)
+          node = WordNode(word.lower(), pos)
           if not word.lower() in node_dict:
             node_dict[word.lower()] = node
           else:
@@ -114,7 +122,7 @@ class TextRank:
         else:
           uninteresting.add(word.lower() + "/" + str(pos))
         i += 1
-    self.debug("Interesting words:\n%s\n" % "\n".join([str(x) for x in sorted(node_dict.values(), key=lambda x: x.word)]))
+    self.debug("Interesting words:\n%s\n" % "\n".join([str(x) for x in sorted(node_dict.values(), key=lambda x: x.value)]))
     self.debug("Uninteresting words:\n%s\n" % "\n".join(sorted(uninteresting)))
     return node_dict
 
@@ -140,8 +148,8 @@ class TextRank:
     for x in range(100):  
       for node in dictionary.values():
         node.new_score = 0
-        for other in node.edges.values():
-          node.new_score += other.score / len(other.edges)
+        for other, weight in node.edges.values():
+          node.new_score += (other.score * weight) / len(other.edges)
         node.new_score *= 0.85
         node.new_score += 1 - 0.85
       for node in dictionary.values():
@@ -212,10 +220,10 @@ class TextRank:
       for node in ranked_nodes:
         if count > max_count:
           break
-        final_dict[node.word] = node
+        final_dict[node.value] = node
         count += 1
     else:
-      final_dict = dict([[node.word, node] for node in ranked_nodes])
+      final_dict = dict([[node.value, node] for node in ranked_nodes])
 
     phrases = self.find_ngram_keywords(final_dict, tagged_sentences) 
     phrases = sorted(phrases, key=lambda x: x.score(), reverse=True)
