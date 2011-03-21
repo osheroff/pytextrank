@@ -42,9 +42,9 @@ class SentenceNode(Node):
   def __hash__(self):
     return hash(" ".join(self.value))
 
-  def __init__(self, sentence):
-    super(SentenceNode, self).__init__(sentence)
-    self.stemmed_words = set([porter_stemmer.stem(word.lower()) for word in sentence])
+  def __init__(self, orig, split):
+    super(SentenceNode, self).__init__(orig)
+    self.stemmed_words = set([porter_stemmer.stem(word.lower()) for word in split])
 
   def similarity(self, other_sentence):
     count = 0.0
@@ -245,13 +245,17 @@ class TextRank:
     return phrases
       
   def extract_sentences(self, text, sentence_count):
-    lines = nltk.tokenize.LineTokenizer().tokenize(text)
+    lines = nltk.tokenize.BlanklineTokenizer().tokenize(text)
 
     outlist = [nltk.sent_tokenize(line) for line in lines]
     sentences = [sentence for inlist in outlist for sentence in inlist]
 
     split_sentences = self.preprocess_split([nltk.word_tokenize(x) for x in sentences])
-    nodes = [SentenceNode(sentence) for sentence in split_sentences]
+
+    nodes = []
+    for orig, split in zip(sentences, split_sentences):
+      nodes.append(SentenceNode(orig, split))
+
     for i in range(len(nodes)):
       this_node = nodes[i]
       for j in range(i + 1, len(nodes)):
@@ -264,5 +268,4 @@ class TextRank:
     rank_sorted_nodes =  sorted(ranked,
                               key=lambda x: x.score, reverse=True)
     for sentence in rank_sorted_nodes: 
-      print sentence.score
-      print " ".join(sentence.value)
+      print sentence.value
