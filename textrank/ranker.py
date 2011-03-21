@@ -23,7 +23,8 @@ class Node(object):
         self.new_score = 0.0
         self.count = 1
         self.value = value
-    
+   
+ 
     def add_edge(self, node, weight=1.0):
         self.edges[node] = (node, weight)
 
