@@ -207,15 +207,12 @@ class TextRank:
     else:
       return text
 
-  def preprocess_split(self, sentences):
-    output = []
-    for sent in sentences:
-      output.append(map(self._downcase_maybe, sent))
-    return output
+  def preprocess_split_sentence(self, sentence):
+    return map(self._downcase_maybe, sentence)
  
   def extract_keywords(self, text):
     sentences = nltk.sent_tokenize(text)
-    split_sentences = self.preprocess_split([nltk.word_tokenize(x) for x in sentences])
+    split_sentences = [self.preprocess_split_sentence(nltk.word_tokenize(x)) for x in sentences]
     tagged_sentences = [self.tagger.tag(x) for x in split_sentences]
     dictionary = self.build_node_dict(tagged_sentences)
 
@@ -243,29 +240,45 @@ class TextRank:
     phrases = self.find_ngram_keywords(final_dict, tagged_sentences) 
     phrases = sorted(phrases, key=lambda x: x.score(), reverse=True)
     return phrases
-      
-  def extract_sentences(self, text, sentence_count):
-    lines = nltk.tokenize.BlanklineTokenizer().tokenize(text)
+ 
 
-    outlist = [nltk.sent_tokenize(line) for line in lines]
-    sentences = [sentence for inlist in outlist for sentence in inlist]
+  def tokenize_text_to_lines(self, text):
+    return nltk.tokenize.BlanklineTokenizer().tokenize(text)
 
-    split_sentences = self.preprocess_split([nltk.word_tokenize(x) for x in sentences])
+  def tokenize_lines_to_sentences(self, lines):
+    sentence_list = []
+    for line in lines:
+      sentence_list.extend(nltk.sent_tokenize(line))
+
+    return sentence_list 
+
+  def node_from_sentence(self, sentence):
+    split = self.preprocess_split_sentence(nltk.word_tokenize(sentence))
+    return SentenceNode(sentence, split)
+
+  def nodes_from_text(self, text):
+    lines = self.tokenize_text_to_lines(text)
+    sentences = self.tokenize_lines_to_sentences(lines)
 
     nodes = []
-    for orig, split in zip(sentences, split_sentences):
-      nodes.append(SentenceNode(orig, split))
+    for sentence in sentences:
+      nodes.append(self.node_from_sentence(sentence))
+
+    return nodes
+
+  def extract_sentences(self, text, sentence_count):
+    nodes = self.nodes_from_text(text)
 
     for i in range(len(nodes)):
       this_node = nodes[i]
       for j in range(i + 1, len(nodes)):
         that_node = nodes[j]
         similarity = this_node.similarity(that_node)
-        this_node.add_edge(that_node, similarity)
-        that_node.add_edge(this_node, similarity)
+        if similarity > 0.0:
+          this_node.add_edge(that_node, similarity)
+          that_node.add_edge(this_node, similarity)
 
     ranked = self.rank(nodes)
-    rank_sorted_nodes =  sorted(ranked,
-                              key=lambda x: x.score, reverse=True)
+    rank_sorted_nodes =  sorted(ranked, key=lambda x: x.score, reverse=True)
     for sentence in rank_sorted_nodes: 
       print sentence.value
